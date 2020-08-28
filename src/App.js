@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 
+const api_key = process.env.REACT_APP_API_KEY
+
+const SearchBar = ({search, setSearch}) => {
+  
+  const handleSearchInput = (e) => {
+    setSearch(e.target.value)
+  }
+
+  return(
+    <p>Enter Country Name: <input value={search} onChange={handleSearchInput}/></p>
+  )
+}
+
 const CountryDetails = ({country}) => {
 
   return(
@@ -17,9 +30,40 @@ const CountryDetails = ({country}) => {
   )
 }
 
-const CountryList = ({search, countries, setSearchBtn}) => {
+const Weather = ({capital}) => {
+  const [weather, setWeather] = useState([])
 
-  let filtered = countries.filter(country => country.name.toLowerCase().includes(search.toLowerCase()))
+
+
+  useEffect(() => {
+    const fetchWeather = () => {
+      axios.get(`http://api.weatherstack.com/current?access_key=${api_key}&query=${capital}`)
+      .then(response => setWeather(response.data.current))
+    }
+
+    fetchWeather()
+  }, [capital])
+
+  return(
+    <div>
+      <h3>Weather in {capital}</h3>
+      <p>Temperature: {weather.temperature} Celcius</p>
+      <p>Wind: {weather.wind_speed} direction {weather.wind_dir}</p>
+    </div>
+  )
+}
+
+const CountryList = ({search, countries, setSearch}) => {
+
+
+  const setSearchBtn = (e) => {
+    setSearch(e.target.value)
+  }
+
+  let filtered = countries
+                  .filter(country => country.name
+                    .toLowerCase()
+                    .includes(search.toLowerCase()))
 
   if (search.length === 0) {
     return(
@@ -34,7 +78,10 @@ const CountryList = ({search, countries, setSearchBtn}) => {
 
   if(filtered.length === 1){
     return(
-      <CountryDetails country={filtered[0]}/>
+      <div>
+        <CountryDetails country={filtered[0]}/>
+        <Weather capital={filtered[0].capital}/>
+      </div>
     )
   }
 
@@ -49,7 +96,6 @@ const CountryList = ({search, countries, setSearchBtn}) => {
       <p>Too many results to be displayed...</p>
     )
   }
-
 }
 
 function App() {
@@ -63,20 +109,12 @@ function App() {
       .then(console.log("Countries recieved"))
   }, [])
 
-  const setSearchBtn = (e) => {
-    console.log("Clicked", e.target.value)
-    setSearch(e.target.value)
-  }
-
-  const handleSearchInput = (e) => {
-    setSearch(e.target.value)
-  }
+  
 
   return(
     <div>
-      <p>Enter Country Name: <input value={search} onChange={handleSearchInput}/></p> 
-
-      <CountryList search={search} countries={countries} setSearchBtn={setSearchBtn}/>
+      <SearchBar search={search} setSearch={setSearch}/>
+      <CountryList search={search} countries={countries} setSearch={setSearch}/>
     </div>
     )
 }
